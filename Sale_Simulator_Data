@@ -1,0 +1,99 @@
+
+Rol: Actúa como experto en simulación de datos, estadística aplicada y generación de series temporales para ventas.
+Objetivo: Generar una tabla mensual de ventas de patinetas eléctricas desde enero 2021 hasta abril 2026 (incluido), con variables coherentes y relacionadas (no independientes).
+
+1) Estructura de la tabla
+Crea un dataset con granularidad mensual y las siguientes columnas:
+
+AnioMes (formato YYYY-MM, desde 2021-01 hasta 2026-04)
+Compra_Total (cantidad total de patinetas vendidas en el mes)
+Compra_Bogota (cantidad vendida en Bogotá)
+Compra_OtrasRegiones (cantidad vendida fuera de Bogotá)
+Mujeres (número de patinetas compradas por mujeres en el mes)
+Target_EU (número de patinetas que cumplen una norma europea simulada)
+Evento_Politico (0/1: hubo evento político en el mes)
+Cambio_Ley (0/1: indicador de entrada en vigor de una ley sobre patinetas)
+
+Validaciones obligatorias:
+
+Compra_Total = Compra_Bogota + Compra_OtrasRegiones
+0 ≤ Mujeres ≤ Compra_Total
+0 ≤ Target_EU ≤ Compra_Total
+
+
+2) Reglas de simulación (coherencia entre variables)
+Simula los datos con estas relaciones:
+A) Tendencia de crecimiento
+
+Compra_Total debe tener tendencia creciente mes a mes (con variación realista).
+Añade estacionalidad suave (por ejemplo: picos en fin de año y/o mitad de año) y ruido moderado, pero manteniendo el crecimiento global.
+
+
+Ejemplo de lógica (no literal):
+Compra_Total = tendencia + estacionalidad + ruido, con tendencia positiva.
+
+B) Distribución por región (Bogotá vs otras)
+
+Define una participación de Bogotá que sea alta pero variable, por ejemplo entre 45% y 70%.
+Compra_Bogota debe aumentar con el tiempo junto con Compra_Total, pero puede variar por estacionalidad y eventos.
+Compra_OtrasRegiones es el resto.
+
+C) Compras por mujeres
+
+La variable Mujeres debe depender de Compra_Total y variar en el tiempo.
+Usa una proporción realista, por ejemplo 30% a 55% del total.
+Si hay Cambio_Ley = 1, permite que la proporción de compras por mujeres aumente ligeramente (ej. +2 a +5 puntos porcentuales) por mayor formalización/seguridad percibida.
+
+D) Norma europea simulada (Target_EU)
+
+Define una “norma” ficticia tipo Euro5, por ejemplo:
+
+“EU-SCOOT-2023”: exige limitador electrónico de velocidad, frenos dobles, luces obligatorias y certificación de batería.
+
+
+Target_EU debe estar correlacionada con:
+
+Cambio_Ley (cuando la ley entra, aumenta el cumplimiento)
+El tiempo (mejora gradual por madurez del mercado)
+
+
+Ejemplo de comportamiento:
+
+Antes de la ley: cumplimiento medio (ej. 25%–45%)
+Después de la ley: cumplimiento mayor (ej. 45%–75%)
+
+
+Mantén variación mensual (no constante).
+
+E) Evento político (Evento_Politico)
+
+Evento_Politico es 1 en meses puntuales, por ejemplo 8%–15% de los meses.
+Cuando Evento_Politico = 1, aplica un efecto razonable:
+
+Puede reducir ligeramente Compra_Total (incertidumbre) o redistribuir región (más compras en Bogotá si hay manifestaciones en otras zonas), pero sin romper la tendencia global creciente.
+
+
+
+F) Cambio de ley (Cambio_Ley)
+
+Selecciona un mes específico a partir del cual Cambio_Ley = 1 en adelante (tipo “step change”).
+Ejemplo: desde 2023-07 en adelante.
+Efectos esperados tras la ley:
+
+Aumenta Target_EU
+Puede aumentar levemente Compra_Total (mayor confianza) o reducirlo un poco (costos) —elige un solo efecto y mantenlo consistente.
+
+
+
+
+3) Entrega del resultado
+
+Entrega la tabla en formato CSV (con encabezados) lista para copiar y pegar en Excel.
+Además, entrega un resumen de 5 validaciones que confirmes que se cumplen (ej.: igualdad de totales, rangos, etc.).
+Incluye una mini sección “Notas de simulación” explicando brevemente las reglas aplicadas.
+
+Formato requerido del CSV:
+
+Separador coma ,
+Sin miles, solo números enteros
+AnioMes como texto YYYY-MM
