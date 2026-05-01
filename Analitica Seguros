@@ -1,0 +1,78 @@
+Actúa como experto en Analítica de Datos orientada a ventas y prospección (marketing/ventas).
+Vas a trabajar con el archivo adjunto llamado “SEGURO1”. 
+
+OBJETIVO
+1) Realizar un análisis exploratorio y explicativo para identificar qué variables se relacionan más con INS.
+2) Construir un dashboard HTML interactivo (una sola página HTML con navegación por pestañas/secciones) que permita ver distintos análisis.
+3) Incluir un simulador de compra (ROI) con sliders y métricas en tiempo real.
+4) Estimar compras para 2027 con un modelo apropiado y entregar intervalo de confianza.
+
+REQUISITOS DE ANÁLISIS (INS como variable objetivo)
+A. Carga y preparación
+- Detecta el tipo de archivo (CSV/XLSX) y carga la tabla principal.
+- Normaliza nombres de columnas, trata nulos, outliers y tipos de dato.
+- Describe el dataset: filas, columnas, diccionario de variables (tipo, % nulos, cardinalidad).
+- Si INS es categórica/binaria: trátala como variable objetivo de clasificación.
+- Si INS es numérica/continua: trátala como variable objetivo de regresión.
+- Explica claramente cómo interpretas INS (y por qué) según el dataset.
+
+B. Relación INS vs resto de variables (correlación/asociación)
+- Para variables numéricas: Pearson y Spearman (según normalidad).
+- Para variables categóricas vs INS numérica: ANOVA/Kruskal y tamaño de efecto.
+- Para INS categórica vs numéricas: point-biserial o AUC/KS por variable.
+- Para categóricas vs categóricas: Cramér’s V y chi-cuadrado.
+- Produce un ranking “Top 10 variables más asociadas a INS” con:
+  (métrica usada, valor, p-value si aplica, interpretación práctica).
+- Incluye matriz/heatmap de correlaciones (numéricas) y gráficos de importancia/asociación.
+
+C. Hallazgos accionables
+- Resume 5–10 insights accionables de prospección (segmentos/condiciones donde INS aumenta).
+- Señala riesgos: sesgos, colinealidad, variables con leakage, y limitaciones.
+
+DASHBOARD HTML INTERACTIVO (entregable)
+Genera el código completo para un archivo HTML (con CSS y JS embebidos) que tenga navegación por pestañas (tabs) o menú lateral y al menos estas páginas/secciones:
+
+1) “Resumen”
+   - KPIs principales, distribución de INS, calidad de datos (nulos/outliers) y conclusiones ejecutivas.
+
+2) “Relaciones con INS”
+   - Heatmap correlación numérica.
+   - Ranking Top variables.
+   - Gráficos: scatter/box/violin/bar según tipo de variable.
+
+3) “Segmentación y oportunidades”
+   - Segmentos con mayor INS y recomendaciones de targeting.
+   - Tabla de segmentos/criterios priorizados.
+
+4) “Simulador de compras (ROI)”
+   Debe incluir:
+   - Parámetros:
+     • Valor por comprador = 30 USD
+     • Coste de llamada por cliente = 1.5 USD
+     • Costes fijos (campo editable, por defecto 0)
+     • Slider “Probabilidad de compra” entre 20% y 70% (0.20 a 0.70)
+     • Slider o campo “Total de llamadas” (enteros, por defecto 1000)
+   - Cálculos en tiempo real:
+     • Compras esperadas = llamadas * probabilidad
+     • Ingresos esperados = compras * 30
+     • Coste variable = llamadas * 1.5
+     • Coste total = coste variable + costes fijos
+     • Beneficio neto = ingresos - coste total
+     • ROI = (beneficio neto / coste total) * 100
+     • Punto de equilibrio (break-even): llamadas necesarias para beneficio neto >= 0 (si es posible).
+   - Visual:
+     • Indicadores tipo tarjetas (KPIs)
+     • Mini-gráfico (p.ej. línea o barra) mostrando ingresos vs costes vs beneficio al variar llamadas o probabilidad.
+
+5) “Forecast 2027”
+   - Usa la serie histórica de tasa de compra:
+     2021: 0.29, 2022: 0.28, 2023: 0.32, 2024: 0.33, 2025: 0.35, 2026: 0.36
+   - Selecciona el mejor enfoque entre:
+     • ARIMA/ETS (si procede con pocos puntos, justificar) 
+     • Regresión (tendencia) con intervalos de confianza
+     • Enfoque bayesiano simple o bootstrap (si la muestra es muy pequeña)
+   - Justifica la elección (limitación por n=6).
+   - Entrega predicción 2027 + intervalo de confianza (p.ej. 80% y 95%) y explica supuestos.
+
+CONDICIONES TÉCNICAS
+- No uses rutas locales. Todo debe ser autocontenible.
