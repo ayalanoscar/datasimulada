@@ -1,0 +1,80 @@
+Actúa como Analista de Datos Senior (estadística + ciencia de datos) y genera un análisis descriptivo y predictivo a partir del dataset adjunto.
+
+OBJETIVO
+1) Explorar y describir todas las variables del dataset (numéricas, categóricas y de fecha).
+2) Construir modelos de series de tiempo para predecir la(s) variable(s) objetivo agregadas en periodos (mes, año o año-mes).
+3) Entregar un dashboard interactivo en HTML (código listo para ejecutar) que permita:
+   - Seleccionar variable(s) a visualizar.
+   - Filtrar por “Empresa”.
+   - Cambiar el nivel de agregación temporal (mensual/anual/año-mes).
+   - Mostrar gráficos que se actualicen según selección/filtros.
+   - Incluir una sección/hoja de “Resultados relevantes” (KPIs, hallazgos y métricas del modelo).
+
+INSTRUCCIONES DE PREPARACIÓN DE DATOS
+A) Detecta y tipifica columnas: fecha/tiempo, numéricas, categóricas (incluye “Empresa”).
+B) Limpieza:
+   - Valores faltantes (imputación o exclusión con justificación).
+   - Duplicados.
+   - Outliers (detecta y decide tratamiento).
+   - Normaliza nombres de columnas.
+C) Crea variables derivadas de fecha:
+   - year, month, year-month.
+D) Define automáticamente variables candidatas a “objetivo” para series de tiempo:
+   - Por defecto, cualquier variable numérica con suficiente historial (>= 24 periodos mensuales si existe).
+   - Si hay una columna explícita de “valor”, “cantidad”, “coste” u “importe”, priorízala.
+E) Agrega (sum/mean según corresponda) por periodo y por Empresa.
+
+ANÁLISIS DESCRIPTIVO (entrega en texto + tablas)
+1) Resumen general del dataset: nº registros, nº variables, rango temporal, nº Empresas.
+2) Para cada variable:
+   - Tipo, % nulos, cardinalidad (si categórica), medidas (si numérica).
+   - Distribución (histograma/boxplot) y descripción de sesgo/atípicos.
+3) Para variables temporales:
+   - Tendencia, estacionalidad, cambios de nivel.
+4) Relaciones:
+   - Correlación entre numéricas.
+   - Comparativas por Empresa (top/bottom, variación, contribución).
+
+GRÁFICOS (mínimo sugerido)
+- Numéricas: histograma + boxplot + densidad (si aplica).
+- Categóricas: barras (top categorías) y Pareto (si cardinalidad alta).
+- Temporales: línea por periodo, líneas por Empresa (seleccionable), heatmap mensual (si procede).
+- Matriz de correlación (si > 3 numéricas).
+
+MODELADO PREDICTIVO (SERIES DE TIEMPO)
+1) Estructura:
+   - Entrenamiento/validación temporal (walk-forward o split temporal).
+2) Modelos:
+   - Baseline: Naive estacional (o promedio móvil).
+   - Modelo 1: ETS/Holt-Winters si hay estacionalidad.
+   - Modelo 2: SARIMA/SARIMAX (si procede).
+   - (Opcional) Modelo 3: Prophet o regresión con features temporales.
+3) Métricas:
+   - MAE, RMSE, MAPE (si aplica).
+4) Selección:
+   - Elige el mejor por métrica y estabilidad.
+5) Salida:
+   - Pronóstico para N periodos futuros (por defecto 6–12 meses) con intervalos de confianza si están disponibles.
+6) Requisito clave:
+   - Permite escoger “Empresa” para entrenar/mostrar predicción por Empresa (modelo por Empresa o enfoque jerárquico, explica decisión).
+
+ENTREGA (IMPORTANTE)
+1) Proporciona:
+   - Explicación narrativa de hallazgos (bullet points).
+   - Tabla final “Resultados relevantes” con:
+     KPIs (medias, tendencias), variables más influyentes/relacionadas, calidad de datos, métricas del mejor modelo.
+2) Genera el CÓDIGO COMPLETO para un dashboard HTML interactivo:
+   - Preferencia: Python (Plotly + Dash o Streamlit exportable a HTML con componentes Plotly; si no es viable, usa Plotly standalone + widgets en HTML).
+   - Debe incluir: dropdown de variable, dropdown de Empresa, selector de periodo, y gráficos dinámicos.
+   - Incluye instrucciones paso a paso para ejecutar el código localmente.
+3) Si el dataset no trae columna fecha:
+   - Detecta alternativas (año/mes separados) o explica por qué no se puede hacer series de tiempo y sugiere el enfoque más cercano.
+
+FORMATO DE RESPUESTA
+- Sección 1: “Resumen ejecutivo”
+- Sección 2: “Calidad y preparación de datos”
+- Sección 3: “Descriptivo: tablas y gráficos”
+- Sección 4: “Series de tiempo: modelos y métricas”
+- Sección 5: “Resultados relevantes (tabla)”
+- Sección 6: “Código del dashboard HTML + instrucciones”
+``
