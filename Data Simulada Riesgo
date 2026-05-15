@@ -1,0 +1,32 @@
+Actúa como Científico de Datos experto en simulación de datos y gestión de riesgo.
+Necesito generar un dataset sintético realista y coherente para indicadores de riesgo en ventas.
+
+OBJETIVO
+- Crear un dataset de 10,000 registros con variables correlacionadas.
+- Usar un enfoque basado en variables latentes con distribución Normal (cópula gaussiana) para inducir correlación entre variables numéricas, binarias y categóricas.
+
+REQUISITOS GENERALES
+1) Tamaño: 10,000 filas.
+2) Reproducibilidad: usa una semilla fija (por ejemplo 20260515).
+3) Coherencia/correlación: las variables deben estar correlacionadas de forma plausible (detalla la lógica).
+4) Distribución: genera factores latentes ~ Normal(0,1) y deriva:
+   - Numéricas con Normal truncada
+   - Binarias con umbrales (probit/logit sobre latentes)
+   - Categóricas con asignación por cortes (multinomial vía latentes)
+5) Entregables:
+   A) Un script completo en Python (preferible) que genere el CSV localmente (archivo “ventas_riesgo_simulado.csv”).
+   B) Mostrar en consola: (i) primeras 20 filas, (ii) resumen estadístico, (iii) verificación de proporciones por Producto/Riesgos/Soporte/Importado, (iv) matriz de correlación de variables numéricas + binarizadas.
+   C) NO imprimas las 10,000 filas completas en el chat.
+
+ESQUEMA DE DATOS (columnas)
+- Id: entero consecutivo 1..10000.
+- Producto (categórica): {P1,P2,P3,P4,P5} con probabilidades:
+  P1=0.40, P2=0.30, P3=0.20, P4=0.05, P5=0.05.
+- Precio_USD (numérica): entre 2 y 50 USD. 
+  Reglas de realismo:
+  - Precio depende de Producto (medias diferentes) y de Importado (ligeramente más caro si Importado=1).
+  - Distribución base: Normal truncada por producto (y clip final a [2,50]).
+- Fecha_venta (fecha): generar fechas dentro de un rango configurable (si no se especifica, usa los últimos 365 días desde hoy).
+  - Distribución: Normal sobre un índice de día (con truncamiento al rango).
+- Vendedor (categórica): 4 vendedores {V1,V2,V3,V4}.
+- Región (categórica): 5 regiones {R1,R2,R3,R4,R5}.
