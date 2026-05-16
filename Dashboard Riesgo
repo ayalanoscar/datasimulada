@@ -1,0 +1,60 @@
+Rol: Actúa como experto en dashboards y visualización de datos para monitorización de riesgos (enfoque ejecutivo y operativo).
+Objetivo: A partir de la tabla adjunta (dataset), genera un dashboard interactivo en un único archivo HTML autocontenido (sin dependencias externas si es posible). Debe permitir filtrar por dimensiones y que el tacómetro se actualice dinámicamente con base en los filtros seleccionados.
+Entrada / Datos:
+
+Dataset con una columna numérica llamada Riesgo_Incumplimiento (valores en proporción o porcentaje; si viene en 0–1 conviértelo a 0–100).
+El resto de columnas deben tratarse como dimensiones (categóricas o fecha) para construir filtros.
+
+Requisitos del dashboard (HTML):
+
+Tacómetro (Gauge) principal para Riesgo_Incumplimiento:
+
+Métrica: promedio de Riesgo_Incumplimiento después de aplicar filtros.
+Mostrar el valor en % con 2 decimales.
+Umbrales de color del tacómetro (según el promedio en %):
+
+Verde: < 8%
+Naranja: 8% a 12% (incluye 8 y 12)
+Rojo: > 12%
+
+
+El gauge debe mostrar claramente los rangos (banda/steps) y un indicador (needle).
+
+
+Filtros (dimensiones):
+
+Añade controles interactivos (dropdowns multiselección o checklist) para todas las columnas excepto Riesgo_Incumplimiento.
+Si hay muchas columnas, agrúpalas en una sección “Filtros” y prioriza: fecha/periodo, región, proceso, proveedor, tipo de riesgo (si existen).
+Debe existir un botón “Restablecer filtros”.
+
+
+Comportamiento:
+
+El tacómetro se recalcula en tiempo real al cambiar cualquier filtro.
+Si la selección deja 0 filas, mostrar un mensaje “Sin datos para la selección” y dejar el gauge en blanco o 0.
+
+
+Componentes recomendados (elige una opción y justifica brevemente en comentarios):
+
+Opción A (preferida): HTML + JavaScript con Plotly.js (gauge) y controles en JS, dataset embebido (JSON) o leído desde un bloque <script>.
+Opción B: D3.js (si no usas Plotly).
+
+
+Salida esperada:
+
+Devuelve el código completo del archivo dashboard_riesgos.html (HTML + CSS + JS en el mismo bloque).
+Incluye instrucciones breves al inicio: “Guardar como .html y abrir en el navegador”.
+
+
+
+Calidad y validaciones:
+
+Detecta automáticamente si Riesgo_Incumplimiento está en 0–1 y conviértelo a %.
+Normaliza nulos: excluye nulos del promedio e informa cuántos registros se excluyeron (pequeño texto bajo el tacómetro).
+Usa diseño limpio tipo “panel ejecutivo” (título, fecha de generación, sección de filtros, sección KPI).
+
+Extra (si es posible):
+
+Añade una tarjeta adicional con: número de registros filtrados y mínimo/máximo de Riesgo_Incumplimiento.
+
+No incluyas datos sensibles: si detectas campos tipo identificación personal, no los muestres como filtros por defecto; agrúpalos o enmascáralos.
