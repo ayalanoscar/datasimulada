@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo Árbol de Decisión — INS · Seguro</title>
+<style>
+  :root {
+    --bg: #f6f5f0;
+    --paper: #ffffff;
+    --ink: #14110f;
+    --ink-soft: #5a544e;
+    --line: #1a1614;
+    --accent: #c24a1f;
+    --accent-soft: #f0c9b8;
+    --green: #2d6a4f;
+    --green-soft: #b7e4c7;
+    --amber: #d4a017;
+    --amber-soft: #f4e1a4;
+    --red: #a4161a;
+    --red-soft: #f4c2c2;
+    --blue: #1e3a5f;
+    --blue-soft: #c5d4e6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 32px 28px 64px; }
+  header.head {
+    border-top: 8px solid var(--line);
+    border-bottom: 2px solid var(--line);
+    padding: 28px 0 22px;
+    margin-bottom: 28px;
+  }
+  .head .eyebrow {
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .head h1 {
+    font-family: "Didot", "Bodoni MT", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 1.05;
+    margin: 0 0 14px 0;
+    letter-spacing: -0.01em;
+  }
+  .head .sub {
+    font-style: italic;
+    color: var(--ink-soft);
+    max-width: 820px;
+    font-size: 17px;
+  }
+  .head .meta {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .head .meta span b { color: var(--ink); font-weight: 700; }
+
+  /* Tabs */
+  nav.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-bottom: 2px solid var(--line);
+    margin-bottom: 28px;
+  }
+  nav.tabs button {
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--line);
+    padding: 14px 22px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+  }
+  nav.tabs button:first-child { border-left: 1px solid var(--line); }
+  nav.tabs button.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  nav.tabs button:hover:not(.active) {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+  .panel { display: none; animation: fade 0.25s ease; }
+  .panel.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none;} }
+
+  h2.section {
+    font-family: "Didot", "Bodoni MT", Georgia, serif;
+    font-weight: 400;
+    font-size: 30px;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.01em;
+  }
+  .section-rule {
+    width: 60px; height: 3px; background: var(--accent); margin-bottom: 18px;
+  }
+  p.lede { font-style: italic; color: var(--ink-soft); margin: 0 0 22px; max-width: 760px; }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 18px 18px 16px;
+    position: relative;
+  }
+  .kpi .lab {
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .kpi .val {
+    font-family: "Didot", "Bodoni MT", Georgia, serif;
+    font-size: 38px;
+    line-height: 1;
+    margin-top: 8px;
+    font-weight: 400;
+  }
+  .kpi .note { font-size: 12px; color: var(--ink-soft); margin-top: 6px; font-style: italic; }
+  .kpi.good { border-left: 6px solid var(--green); }
+  .kpi.warn { border-left: 6px solid var(--amber); }
+  .kpi.bad  { border-left: 6px solid var(--red); }
+  .kpi.info { border-left: 6px solid var(--blue); }
+
+  /* Cards */
+  .card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .card h3 {
+    margin: 0 0 4px;
+    font-family: "Didot", Georgia, serif;
+    font-weight: 400;
+    font-size: 22px;
+  }
+  .card .h3-rule { width: 38px; height: 2px; background: var(--accent); margin-bottom: 14px; }
+  .card p { margin: 0 0 10px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+  canvas { display: block; max-width: 100%; }
+
+  /* Tabla */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0dcd3; }
+  th {
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--line);
+  }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover td { background: #faf6ef; }
+
+  /* Árbol */
+  .tree-wrap { overflow-x: auto; padding: 14px 0; }
+  .tree-svg-wrap { min-width: 1100px; }
+  .legend {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: "Courier New", monospace; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .legend .sw { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; border: 1px solid var(--line); }
+
+  /* Reglas */
+  pre.rules {
+    background: #1a1614;
+    color: #f6f5f0;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    border: 1.5px solid var(--line);
+  }
+
+  /* Conclusiones */
+  .insight {
+    background: #faf6ef;
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 15px;
+  }
+  .insight b { color: var(--accent); }
+
+  /* Footer */
+  footer.foot {
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 2px solid var(--line);
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="head">
+    <div class="eyebrow">Informe analítico · Modelo predictivo</div>
+    <h1>Árbol de decisión para la propensión a contratar el seguro <i>INS</i></h1>
+    <div class="sub">
+      Modelo interpretable basado en <b>27.460 clientes</b> y 47 variables predictoras. Identifica los segmentos de clientes con mayor probabilidad de adquirir el producto a partir de reglas simples sobre saldos, productos contratados y comportamiento transaccional.
+    </div>
+    <div class="meta">
+      <span>Algoritmo · <b>Decision Tree</b></span>
+      <span>Profundidad · <b id="m-depth"></b></span>
+      <span>Hojas · <b id="m-leaves"></b></span>
+      <span>Split · <b>70/30 estratificado</b></span>
+      <span>Validación · <b>5-fold CV</b></span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="active" data-tab="resumen">01 · Resumen</button>
+    <button data-tab="performance">02 · Performance</button>
+    <button data-tab="vars">03 · Variables</button>
+    <button data-tab="tree">04 · Árbol</button>
+    <button data-tab="lift">05 · Lift &amp; Deciles</button>
+    <button data-tab="reglas">06 · Reglas</button>
+    <button data-tab="conclusiones">07 · Conclusiones</button>
+  </nav>
+
+  <!-- 01 RESUMEN -->
+  <section class="panel active" id="resumen">
+    <h2 class="section">Síntesis ejecutiva</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Indicadores principales del modelo evaluado sobre la muestra de prueba (30%, n=8.238).</p>
+
+    <div class="kpi-grid">
+      <div class="kpi good">
+        <div class="lab">AUC · Test</div>
+        <div class="val" id="k-auc"></div>
+        <div class="note">capacidad discriminativa</div>
+      </div>
+      <div class="kpi info">
+        <div class="lab">AUC · 5-fold CV</div>
+        <div class="val" id="k-cv"></div>
+        <div class="note" id="k-cv-note"></div>
+      </div>
+      <div class="kpi good">
+        <div class="lab">Recall (sensibilidad)</div>
+        <div class="val" id="k-rec"></div>
+        <div class="note">positivos detectados</div>
+      </div>
+      <div class="kpi warn">
+        <div class="lab">Precisión</div>
+        <div class="val" id="k-prec"></div>
+        <div class="note">aciertos entre los predichos +</div>
+      </div>
+      <div class="kpi info">
+        <div class="lab">F1-score</div>
+        <div class="val" id="k-f1"></div>
+        <div class="note">balance precisión/recall</div>
+      </div>
+      <div class="kpi info">
+        <div class="lab">Accuracy</div>
+        <div class="val" id="k-acc"></div>
+        <div class="note">acierto global</div>
+      </div>
+      <div class="kpi info">
+        <div class="lab">Tasa base INS</div>
+        <div class="val" id="k-base"></div>
+        <div class="note">positivos en la población</div>
+      </div>
+      <div class="kpi info">
+        <div class="lab">Lift Top-10%</div>
+        <div class="val" id="k-lift"></div>
+        <div class="note">vs. tasa base</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Lectura rápida</h3>
+      <div class="h3-rule"></div>
+      <p>El árbol logra un <b>AUC de prueba de <span id="t-auc"></span></b> con una validación cruzada estable
+      (<span id="t-cv"></span>), lo que indica que el modelo no presenta sobreajuste relevante. Con apenas
+      <span id="t-leaves"></span> hojas y profundidad <span id="t-depth"></span> obtiene un poder predictivo útil para priorización comercial.</p>
+      <p>Las cuatro variables que explican casi toda la decisión del árbol son <b>saldo en cuenta de ahorros</b> (SavBal), <b>saldo en money market</b> (MMBal), <b>saldo en cuenta corriente</b> (DDABal) y <b>tenencia de cuenta corriente</b> (DDA). Es decir, el comportamiento de saldos y la profundidad de relación bancaria son los predictores dominantes de la adquisición del seguro.</p>
+    </div>
+  </section>
+
+  <!-- 02 PERFORMANCE -->
+  <section class="panel" id="performance">
+    <h2 class="section">Performance del modelo</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Curva ROC, matriz de confusión y métricas detalladas en train vs. test.</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Curva ROC</h3>
+        <div class="h3-rule"></div>
+        <canvas id="rocChart" width="520" height="380"></canvas>
+        <p style="font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:10px;">Área bajo la curva = <b id="roc-auc"></b>. Un clasificador aleatorio tendría AUC = 0.500.</p>
+      </div>
+      <div class="card">
+        <h3>Matriz de confusión (test)</h3>
+        <div class="h3-rule"></div>
+        <canvas id="cmChart" width="520" height="380"></canvas>
+        <table style="margin-top:14px;">
+          <tr><th></th><th class="num">Pred. 0</th><th class="num">Pred. 1</th></tr>
+          <tr><th>Real 0</th><td class="num" id="cm00"></td><td class="num" id="cm01"></td></tr>
+          <tr><th>Real 1</th><td class="num" id="cm10"></td><td class="num" id="cm11"></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Train vs Test</h3>
+      <div class="h3-rule"></div>
+      <table>
+        <tr><th>Métrica</th><th class="num">Train</th><th class="num">Test</th><th class="num">Δ</th></tr>
+        <tr><td>AUC</td><td class="num" id="auc-tr"></td><td class="num" id="auc-te"></td><td class="num" id="auc-d"></td></tr>
+        <tr><td>Accuracy</td><td class="num" id="acc-tr"></td><td class="num" id="acc-te"></td><td class="num" id="acc-d"></td></tr>
+      </table>
+      <p style="margin-top:14px;font-size:14px;color:var(--ink-soft);font-style:italic;">La diferencia entre train y test es pequeña, lo que confirma estabilidad y bajo sobreajuste.</p>
+    </div>
+  </section>
+
+  <!-- 03 VARIABLES -->
+  <section class="panel" id="vars">
+    <h2 class="section">Importancia de variables</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Contribución relativa de cada variable a la reducción de impureza (Gini) en el árbol.</p>
+
+    <div class="card">
+      <canvas id="impChart" width="1180" height="460"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Comportamiento medio por clase · Top 10 variables</h3>
+      <div class="h3-rule"></div>
+      <table id="grpTable">
+        <thead><tr><th>Variable</th><th class="num">Media (Sin INS)</th><th class="num">Media (Con INS)</th><th class="num">Δ %</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p style="margin-top:14px;font-size:14px;color:var(--ink-soft);font-style:italic;">Los clientes con INS = 1 muestran consistentemente saldos promedio más altos en productos de ahorro y money market, validando el patrón identificado por el árbol.</p>
+    </div>
+  </section>
+
+  <!-- 04 ÁRBOL -->
+  <section class="panel" id="tree">
+    <h2 class="section">Visualización del árbol</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Cada nodo muestra la regla de partición, el número de clientes y la probabilidad estimada de contratar INS. El color codifica la propensión: rojo = baja, ámbar = media, verde = alta.</p>
+
+    <div class="legend">
+      <span><span class="sw" style="background:#f4c2c2"></span> Prob. INS &lt; 30%</span>
+      <span><span class="sw" style="background:#f4e1a4"></span> 30% – 60%</span>
+      <span><span class="sw" style="background:#b7e4c7"></span> &gt; 60%</span>
+    </div>
+
+    <div class="card" style="padding:14px;">
+      <div class="tree-wrap">
+        <div class="tree-svg-wrap" id="treeSvg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 LIFT -->
+  <section class="panel" id="lift">
+    <h2 class="section">Lift &amp; análisis por deciles</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Si ordenamos los clientes por su probabilidad estimada y los agrupamos en 10 deciles, ¿qué tan concentrado está el negocio en los primeros?</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Lift por decil</h3>
+        <div class="h3-rule"></div>
+        <canvas id="liftChart" width="520" height="360"></canvas>
+        <p style="font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:10px;">El decil 1 (clientes con mayor probabilidad estimada) contrata el seguro a una tasa <b id="lift-mult"></b> veces superior a la tasa base de la población.</p>
+      </div>
+      <div class="card">
+        <h3>Captura acumulada (ganancia)</h3>
+        <div class="h3-rule"></div>
+        <canvas id="gainChart" width="520" height="360"></canvas>
+        <p style="font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:10px;">Contactando solamente al <b>30% mejor scorado</b> se captura aproximadamente el <b id="gain-30"></b> de todos los contratantes.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Tabla detallada</h3>
+      <div class="h3-rule"></div>
+      <table id="decilesTable">
+        <thead>
+          <tr><th>Decil</th><th class="num">n</th><th class="num">Capt.</th><th class="num">Tasa</th><th class="num">Lift</th><th class="num">% Capt.</th><th class="num">% Acum.</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 06 REGLAS -->
+  <section class="panel" id="reglas">
+    <h2 class="section">Reglas del árbol</h2>
+    <div class="section-rule"></div>
+    <p class="lede">Representación textual del árbol (primeros 3 niveles) — útil para implementar como reglas de negocio.</p>
+    <div class="card">
+      <pre class="rules" id="rulesText"></pre>
+    </div>
+    <div class="card">
+      <h3>Cómo leer las reglas</h3>
+      <div class="h3-rule"></div>
+      <p>Cada línea <code>variable &lt;= valor</code> representa una bifurcación. Las hojas terminales etiquetadas <code>class: 1</code> identifican <b>segmentos de alta propensión a contratar INS</b>; pueden traducirse directamente a criterios de focalización en campañas comerciales.</p>
+    </div>
+  </section>
+
+  <!-- 07 CONCLUSIONES -->
+  <section class="panel" id="conclusiones">
+    <h2 class="section">Hallazgos &amp; recomendaciones</h2>
+    <div class="section-rule"></div>
+
+    <div class="card">
+      <h3>1 · El saldo en ahorros es el predictor dominante</h3>
+      <div class="h3-rule"></div>
+      <p>La variable <b>SavBal</b> concentra cerca del <b>42% de la importancia</b> del modelo. Es la primera y más relevante partición. Esto sugiere que el seguro INS se asocia fuertemente con clientes que mantienen capacidad de ahorro líquido.</p>
+      <div class="insight"><b>Acción:</b> priorizar la oferta entre clientes con SavBal &gt; ~1.600 USD; ese umbral por sí solo eleva sustancialmente la probabilidad de contratación.</div>
+    </div>
+
+    <div class="card">
+      <h3>2 · La profundidad de la relación bancaria importa</h3>
+      <div class="h3-rule"></div>
+      <p>Las cuatro variables top (<b>SavBal, MMBal, DDABal, DDA</b>) suman más del <b>92% de la importancia</b>. Son todas indicadores de tenencia y profundidad de relación con la entidad. Variables sociodemográficas (Age, Income, HMVal, CRScore) prácticamente no participan.</p>
+      <div class="insight"><b>Acción:</b> construir un indicador compuesto de "profundidad de relación" como criterio inicial de segmentación, en lugar de depender de variables sociodemográficas.</div>
+    </div>
+
+    <div class="card">
+      <h3>3 · Concentración del negocio en los deciles altos</h3>
+      <div class="h3-rule"></div>
+      <p>El modelo permite concentrar el esfuerzo comercial: el <b>top 30% scorado</b> contiene aproximadamente el <b id="conc-30"></b> de los contratantes. Esto puede reducir significativamente el costo por contacto efectivo.</p>
+      <div class="insight"><b>Acción:</b> diseñar campañas tier-1 (top decil) con oferta diferenciada y campañas tier-2/3 (deciles 2-3) con tratamiento estándar; descartar contacto saliente en deciles 8-10.</div>
+    </div>
+
+    <div class="card">
+      <h3>4 · Limitaciones y siguientes pasos</h3>
+      <div class="h3-rule"></div>
+      <p>Si bien el árbol es altamente interpretable, su AUC (~0.76) puede mejorarse con modelos de ensamble (Gradient Boosting, Random Forest) — típicamente alcanzando AUC de 0.80+. Se recomienda:</p>
+      <ul style="margin-top:6px;">
+        <li>Comparar contra <b>XGBoost / LightGBM</b> manteniendo el árbol como modelo explicativo de respaldo.</li>
+        <li>Revisar imputaciones (variables con &gt;10% de nulos: Age, Income, HMVal).</li>
+        <li>Incorporar variables temporales/comportamiento de los últimos 3-6 meses si están disponibles.</li>
+        <li>Monitorear estabilidad mensual del scoring (PSI).</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Modelo Decision Tree · sklearn · Python</span>
+    <span>Generado · <span id="gen-date"></span></span>
+  </footer>
+
+</div>
+
+<script>
+const DATA = {"metrics": {"auc_test": 0.7624627483295532, "auc_train": 0.7799907474113603, "accuracy_test": 0.6888807963097839, "accuracy_train": 0.7071584642597024, "precision_test": 0.5360876057740169, "recall_test": 0.7549947423764458, "f1_test": 0.62698297191093, "n_train": 19222, "n_test": 8238, "positive_rate": 0.346285506190823, "tree_depth": 5, "n_leaves": 27}, "cm": [[3521, 1864], [699, 2154]], "cv_mean": 0.7685078497242743, "cv_std": 0.005298878676729625, "importances": [{"variable": "SavBal", "importance": 0.421462895724517}, {"variable": "MMBal", "importance": 0.17556427060226062}, {"variable": "DDABal", "importance": 0.17283485388999786}, {"variable": "DDA", "importance": 0.15672884701956516}, {"variable": "CDBal", "importance": 0.026271989948178663}, {"variable": "Checks", "importance": 0.022856043995511405}, {"variable": "AcctAge", "importance": 0.013963546300585515}, {"variable": "Teller", "importance": 0.0036705452470276903}, {"variable": "CCBal", "importance": 0.0018467893893084502}, {"variable": "DepAmt", "importance": 0.0017271463922360491}, {"variable": "Branch", "importance": 0.0016776930123290816}, {"variable": "ATMAmt", "importance": 0.0013953784784825002}, {"variable": "NSF", "importance": 0.0}, {"variable": "CashBk", "importance": 0.0}, {"variable": "DirDep", "importance": 0.0}], "tree": {"type": "node", "feature": "SavBal", "threshold": 1616.9000244140625, "samples": 19222, "value": [0.4999999999998485, 0.4999999999999242], "prob_pos": 0.5000000000000379, "impurity": 0.5000000000002274, "left": {"type": "node", "feature": "MMBal", "threshold": 7269.330078125, "samples": 14880, "value": [0.5926064066838616, 0.40739359331616576], "prob_pos": 0.40739359331615466, "impurity": 0.48284810688231505, "left": {"type": "node", "feature": "DDABal", "threshold": 2170.969970703125, "samples": 13016, "value": [0.6432944414036336, 0.3567055585964324], "prob_pos": 0.35670555859640884, "impurity": 0.458933406125547, "left": {"type": "node", "feature": "DDA", "threshold": 0.5, "samples": 10527, "value": [0.7002100760082373, 0.29978992399185933], "prob_pos": 0.29978992399183035, "impurity": 0.41983185092944475, "left": {"type": "node", "feature": "CDBal", "threshold": 1200.0, "samples": 1680, "value": [0.4115625719556174, 0.588437428044377], "prob_pos": 0.5884374280443803, "impurity": 0.4843576426417958, "left": {"type": "leaf", "samples": 1349, "value": [0.4640678978120859, 0.535932102187904], "class": 1, "prob_pos": 0.5359321021879094, "impurity": 0.49741776806471594}, "right": {"type": "leaf", "samples": 331, "value": [0.22918147159652588, 0.7708185284034755], "class": 1, "prob_pos": 0.7708185284034745, "impurity": 0.35331464934679513}}, "right": {"type": "node", "feature": "DDABal", "threshold": 779.2750244140625, "samples": 8847, "value": [0.7677174799674256, 0.23228252003266078], "prob_pos": 0.23228252003264072, "impurity": 0.35665470183971626, "left": {"type": "leaf", "samples": 6019, "value": [0.8194600192134732, 0.18053998078659397], "class": 0, "prob_pos": 0.18053998078658182, "impurity": 0.2958905922482141}, "right": {"type": "leaf", "samples": 2828, "value": [0.6662618499145949, 0.3337381500853667], "class": 0, "prob_pos": 0.33373815008537955, "impurity": 0.44471399452588745}}}, "right": {"type": "node", "feature": "DDABal", "threshold": 5113.83984375, "samples": 2489, "value": [0.43723441491765086, 0.5627655850823354], "prob_pos": 0.5627655850823432, "impurity": 0.49212096265871763, "left": {"type": "node", "feature": "AcctAge", "threshold": 3.149999976158142, "samples": 1404, "value": [0.5216511189434456, 0.4783488810565518], "prob_pos": 0.47834888105655304, "impurity": 0.49906245809699634, "left": {"type": "leaf", "samples": 531, "value": [0.4094002904997422, 0.590599709500256], "class": 1, "prob_pos": 0.590599709500257, "impurity": 0.4835833852769399}, "right": {"type": "leaf", "samples": 873, "value": [0.5983273772284347, 0.40167262277154936], "class": 0, "prob_pos": 0.4016726227715558, "impurity": 0.4806634537747506}}, "right": {"type": "node", "feature": "Checks", "threshold": 8.5, "samples": 1085, "value": [0.3400373940295543, 0.6599626059704283], "prob_pos": 0.6599626059704398, "impurity": 0.4488239293823194, "left": {"type": "leaf", "samples": 817, "value": [0.29544350166336236, 0.7045564983366284], "class": 1, "prob_pos": 0.7045564983366349, "impurity": 0.41631327797653006}, "right": {"type": "leaf", "samples": 268, "value": [0.4950712762701408, 0.5049287237298618], "class": 1, "prob_pos": 0.5049287237298604, "impurity": 0.49995141536480303}}}}, "right": {"type": "node", "feature": "CDBal", "threshold": 2350.0, "samples": 1864, "value": [0.3061060025560779, 0.6938939974439158], "prob_pos": 0.6938939974439202, "impurity": 0.424810235510916, "left": {"type": "node", "feature": "Checks", "threshold": 4.5, "samples": 1456, "value": [0.33822950601565427, 0.6617704939843314], "prob_pos": 0.6617704939843408, "impurity": 0.4476606145521411, "left": {"type": "node", "feature": "Branch", "threshold": 12.5, "samples": 1011, "value": [0.30746526253852946, 0.6925347374614578], "prob_pos": 0.6925347374614667, "impurity": 0.4258607497413103, "left": {"type": "leaf", "samples": 630, "value": [0.3405432527716209, 0.6594567472283746], "class": 1, "prob_pos": 0.6594567472283775, "impurity": 0.4491470915266973}, "right": {"type": "leaf", "samples": 381, "value": [0.25592479748258656, 0.7440752025174145], "class": 1, "prob_pos": 0.7440752025174138, "impurity": 0.3808545910321953}}, "right": {"type": "node", "feature": "CCBal", "threshold": 2.1549999713897705, "samples": 445, "value": [0.413281737000487, 0.5867182629995144], "prob_pos": 0.5867182629995136, "impurity": 0.48495988572469717, "left": {"type": "leaf", "samples": 210, "value": [0.4880799126566402, 0.5119200873433619], "class": 1, "prob_pos": 0.5119200873433608, "impurity": 0.49971582303545103}, "right": {"type": "leaf", "samples": 235, "value": [0.35207225788098157, 0.6479277421190206], "class": 1, "prob_pos": 0.6479277421190192, "impurity": 0.4562347662231372}}}, "right": {"type": "node", "feature": "MMBal", "threshold": 15096.31005859375, "samples": 408, "value": [0.2021234892362403, 0.7978765107637609], "prob_pos": 0.79787651076376, "impurity": 0.322539168670385, "left": {"type": "leaf", "samples": 208, "value": [0.21900660266300184, 0.780993397337], "class": 1, "prob_pos": 0.7809933973369987, "impurity": 0.3420854213060208}, "right": {"type": "leaf", "samples": 200, "value": [0.18500880200129777, 0.8149911979987037], "class": 1, "prob_pos": 0.8149911979987026, "impurity": 0.301561090366684}}}}, "right": {"type": "node", "feature": "SavBal", "threshold": 8196.14501953125, "samples": 4342, "value": [0.24653618567850172, 0.753463814321543], "prob_pos": 0.7534638143215093, "impurity": 0.37151218965984867, "left": {"type": "node", "feature": "Checks", "threshold": 6.5, "samples": 2624, "value": [0.31090750111435983, 0.6890924988856252], "prob_pos": 0.6890924988856355, "impurity": 0.4284880537303951, "left": {"type": "node", "feature": "CDBal", "threshold": 150.0, "samples": 1876, "value": [0.2689819226690793, 0.7310180773309138], "prob_pos": 0.7310180773309188, "impurity": 0.39326129589264813, "left": {"type": "node", "feature": "AcctAge", "threshold": 3.850000023841858, "samples": 1473, "value": [0.29897022242932425, 0.7010297775706632], "prob_pos": 0.701029777570672, "impurity": 0.41917405705978505, "left": {"type": "leaf", "samples": 833, "value": [0.2559700447813431, 0.7440299552186493], "class": 1, "prob_pos": 0.744029955218655, "impurity": 0.3808987619119849}, "right": {"type": "leaf", "samples": 640, "value": [0.35911411399099463, 0.6408858860089989], "class": 1, "prob_pos": 0.640885886009003, "impurity": 0.46030233424691813}}, "right": {"type": "node", "feature": "ATMAmt", "threshold": 75.3499984741211, "samples": 403, "value": [0.1693416304383883, 0.8306583695616128], "prob_pos": 0.8306583695616119, "impurity": 0.2813300852777004, "left": {"type": "leaf", "samples": 200, "value": [0.19586803495775157, 0.8041319650422503], "class": 1, "prob_pos": 0.8041319650422488, "impurity": 0.31500749567907826}, "right": {"type": "leaf", "samples": 203, "value": [0.14422803085647815, 0.8557719691435226], "class": 1, "prob_pos": 0.855771969143522, "impurity": 0.24685261194348163}}}, "right": {"type": "node", "feature": "SavBal", "threshold": 4091.6400146484375, "samples": 748, "value": [0.42804562408930774, 0.5719543759106812], "prob_pos": 0.5719543759106875, "impurity": 0.4896451355746717, "left": {"type": "node", "feature": "Teller", "threshold": 1.5, "samples": 453, "value": [0.5144137877733986, 0.48558621222660275], "prob_pos": 0.4855862122266021, "impurity": 0.49958448544405176, "left": {"type": "leaf", "samples": 239, "value": [0.6124364135821007, 0.3875635864179013], "class": 0, "prob_pos": 0.3875635864179005, "impurity": 0.4747161058015892}, "right": {"type": "leaf", "samples": 214, "value": [0.41723091600524814, 0.582769083994755], "class": 1, "prob_pos": 0.5827690839947532, "impurity": 0.48629855746933714}}, "right": {"type": "leaf", "samples": 295, "value": [0.31179831979085304, 0.6882016802091488], "class": 1, "prob_pos": 0.6882016802091476, "impurity": 0.4291602551329299}}}, "right": {"type": "node", "feature": "SavBal", "threshold": 14470.8798828125, "samples": 1718, "value": [0.1586354959562869, 0.8413645040437095], "prob_pos": 0.8413645040437125, "impurity": 0.2669405507577708, "left": {"type": "node", "feature": "DepAmt", "threshold": 1520.5849609375, "samples": 734, "value": [0.19765054456723727, 0.8023494554327574], "prob_pos": 0.8023494554327617, "impurity": 0.3171696135990322, "left": {"type": "node", "feature": "DepAmt", "threshold": 119.81999969482422, "samples": 417, "value": [0.16117235295195628, 0.8388276470480444], "prob_pos": 0.8388276470480438, "impurity": 0.27039165119176656, "left": {"type": "leaf", "samples": 216, "value": [0.1856739564637839, 0.8143260435362175], "class": 1, "prob_pos": 0.8143260435362164, "impurity": 0.30239827670973474}, "right": {"type": "leaf", "samples": 201, "value": [0.13584239981614177, 0.8641576001838591], "class": 1, "prob_pos": 0.8641576001838583, "impurity": 0.2347784844566676}}, "right": {"type": "leaf", "samples": 317, "value": [0.24890617403986473, 0.7510938259601369], "class": 1, "prob_pos": 0.7510938259601356, "impurity": 0.373903781129425}}, "right": {"type": "node", "feature": "ATMAmt", "threshold": 495.25, "samples": 984, "value": [0.13099802429706375, 0.8690019757029261], "prob_pos": 0.8690019757029349, "impurity": 0.22767508385465607, "left": {"type": "node", "feature": "SavBal", "threshold": 32330.3193359375, "samples": 642, "value": [0.1548513286809126, 0.845148671319084], "prob_pos": 0.8451486713190869, "impurity": 0.2617447893733422, "left": {"type": "leaf", "samples": 381, "value": [0.1788192377063234, 0.8211807622936776], "class": 1, "prob_pos": 0.8211807622936768, "impurity": 0.29368583586490526}, "right": {"type": "leaf", "samples": 261, "value": [0.12140299251567135, 0.8785970074843293], "class": 1, "prob_pos": 0.8785970074843288, "impurity": 0.2133286118478347}}, "right": {"type": "leaf", "samples": 342, "value": [0.08853858428819657, 0.9114614157118041], "class": 1, "prob_pos": 0.9114614157118035, "impurity": 0.16139900676091246}}}}}, "roc": {"fpr": [0.0, 0.0, 0.0, 0.007056638811513464, 0.007056638811513464, 0.007056638811513464, 0.011327762302692664, 0.011327762302692664, 0.011327762302692664, 0.016527390900649953, 0.016527390900649953, 0.016527390900649953, 0.020798514391829157, 0.020798514391829157, 0.020798514391829157, 0.02915506035283194, 0.02915506035283194, 0.02915506035283194, 0.0350974930362117, 0.0350974930362117, 0.0350974930362117, 0.04011142061281337, 0.04011142061281337, 0.04011142061281337, 0.044753946146703805, 0.044753946146703805, 0.044753946146703805, 0.049767873723305475, 0.049767873723305475, 0.049767873723305475, 0.058124419684308266, 0.058124419684308266, 0.058124419684308266, 0.06592386258124419, 0.06592386258124419, 0.06592386258124419, 0.07836583101207056, 0.07836583101207056, 0.07836583101207056, 0.10826369545032498, 0.10826369545032498, 0.13779015784586815, 0.13779015784586815, 0.13779015784586815, 0.14874651810584957, 0.14874651810584957, 0.14874651810584957, 0.172330547818013, 0.172330547818013, 0.172330547818013, 0.1797585886722377, 0.1797585886722377, 0.1797585886722377, 0.20984215413184773, 0.20984215413184773, 0.20984215413184773, 0.2384401114206128, 0.2384401114206128, 0.2384401114206128, 0.2501392757660167, 0.2501392757660167, 0.2501392757660167, 0.3201485608170845, 0.3201485608170845, 0.3201485608170845, 0.3353760445682451, 0.3353760445682451, 0.3353760445682451, 0.34614670380687096, 0.34614670380687096, 0.34614670380687096, 0.393686165273909, 0.393686165273909, 0.393686165273909, 0.4009285051067781, 0.4009285051067781, 0.4009285051067781, 0.581058495821727, 0.581058495821727, 1.0], "tpr": [0.0, 0.0, 0.0, 0.048720644935155974, 0.048720644935155974, 0.048720644935155974, 0.07500876270592359, 0.07500876270592359, 0.07500876270592359, 0.09568874868559411, 0.09568874868559411, 0.09568874868559411, 0.11321416053277251, 0.11321416053277251, 0.11321416053277251, 0.15597616543988785, 0.15597616543988785, 0.15597616543988785, 0.1784086926042762, 0.1784086926042762, 0.1784086926042762, 0.2015422362425517, 0.2015422362425517, 0.2015422362425517, 0.21731510690501227, 0.21731510690501227, 0.21731510690501227, 0.23659305993690852, 0.23659305993690852, 0.23659305993690852, 0.2698913424465475, 0.2698913424465475, 0.2698913424465475, 0.30248860848229936, 0.30248860848229936, 0.30248860848229936, 0.3336838415702769, 0.3336838415702769, 0.3336838415702769, 0.40764107956536977, 0.40764107956536977, 0.46442341395022785, 0.46442341395022785, 0.46442341395022785, 0.4889589905362776, 0.4889589905362776, 0.4889589905362776, 0.539782684893095, 0.539782684893095, 0.539782684893095, 0.5583596214511041, 0.5583596214511041, 0.5583596214511041, 0.6070802663862601, 0.6070802663862601, 0.6070802663862601, 0.6410795653697862, 0.6410795653697862, 0.6410795653697862, 0.6536978618997547, 0.6536978618997547, 0.6536978618997547, 0.728005608131791, 0.728005608131791, 0.728005608131791, 0.7399228881878724, 0.7399228881878724, 0.7399228881878724, 0.7549947423764458, 0.7549947423764458, 0.7549947423764458, 0.7907465825446898, 0.7907465825446898, 0.7907465825446898, 0.8030143708377147, 0.8030143708377147, 0.8030143708377147, 0.8927444794952681, 0.8927444794952681, 1.0]}, "deciles": [{"decile": 1, "n": 824, "capt": 598, "avg_p": 0.8528267736457631, "rate": 0.7257281553398058, "lift": 2.0955305095300805, "capt_pct": 0.20960392569225378, "cum_capt_pct": 0.20960392569225378}, {"decile": 2, "n": 824, "capt": 508, "avg_p": 0.7561244430727293, "rate": 0.616504854368932, "lift": 1.780149663614182, "capt_pct": 0.17805818436733264, "cum_capt_pct": 0.3876621100595864}, {"decile": 3, "n": 824, "capt": 436, "avg_p": 0.6915285613338101, "rate": 0.529126213592233, "lift": 1.5278449868814634, "capt_pct": 0.15282159130739573, "cum_capt_pct": 0.5404837013669821}, {"decile": 4, "n": 823, "capt": 348, "avg_p": 0.6087354211651793, "rate": 0.42284325637910086, "lift": 1.2209543449179925, "capt_pct": 0.12197686645636173, "cum_capt_pct": 0.6624605678233438}, {"decile": 5, "n": 824, "capt": 292, "avg_p": 0.512295036208194, "rate": 0.35436893203883496, "lift": 1.023235633416026, "capt_pct": 0.1023484051875219, "cum_capt_pct": 0.7648089730108657}, {"decile": 6, "n": 824, "capt": 208, "avg_p": 0.3597602881544887, "rate": 0.2524271844660194, "lift": 0.7288801772278541, "capt_pct": 0.07290571328426218, "cum_capt_pct": 0.8377146862951279}, {"decile": 7, "n": 823, "capt": 170, "avg_p": 0.3169850088497779, "rate": 0.2065613608748481, "lift": 0.5964432144714331, "capt_pct": 0.05958640028040659, "cum_capt_pct": 0.8973010865755345}, {"decile": 8, "n": 824, "capt": 80, "avg_p": 0.18053998078659395, "rate": 0.0970873786407767, "lift": 0.2803385297030208, "capt_pct": 0.028040658955485454, "cum_capt_pct": 0.92534174553102}, {"decile": 9, "n": 824, "capt": 105, "avg_p": 0.18053998078659395, "rate": 0.12742718446601942, "lift": 0.36794432023521484, "capt_pct": 0.03680336487907466, "cum_capt_pct": 0.9621451104100947}, {"decile": 10, "n": 824, "capt": 108, "avg_p": 0.18053998078659395, "rate": 0.13106796116504854, "lift": 0.3784570150990781, "capt_pct": 0.03785488958990536, "cum_capt_pct": 1.0}], "group_stats": [{"variable": "SavBal", "mean_no_ins": 1312.8744783020443, "mean_ins": 6535.776416026923}, {"variable": "MMBal", "mean_no_ins": 1245.7387566152304, "mean_ins": 3056.9299095593647}, {"variable": "DDABal", "mean_no_ins": 1548.0801008300373, "mean_ins": 3298.7205762961407}, {"variable": "DDA", "mean_no_ins": 0.8680296362319648, "mean_ins": 0.7139552003365233}, {"variable": "CDBal", "mean_no_ins": 1226.1211074591945, "mean_ins": 5074.4031969712905}, {"variable": "Checks", "mean_no_ins": 4.5313353016545035, "mean_ins": 3.689767588600273}, {"variable": "AcctAge", "mean_no_ins": 5.568085343434907, "mean_ins": 5.712377747397203}, {"variable": "Teller", "mean_no_ins": 1.332126343936271, "mean_ins": 1.402145335997476}, {"variable": "CCBal", "mean_no_ins": 8906.515845231112, "mean_ins": 11419.020454967504}, {"variable": "DepAmt", "mean_no_ins": 2031.5701203275587, "mean_ins": 2591.51879798086}], "tree_text": "|--- SavBal <= 1616.90\n|   |--- MMBal <= 7269.33\n|   |   |--- DDABal <= 2170.97\n|   |   |   |--- DDA <= 0.50\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- DDA >  0.50\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |--- DDABal >  2170.97\n|   |   |   |--- DDABal <= 5113.84\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- DDABal >  5113.84\n|   |   |   |   |--- truncated branch of depth 2\n|   |--- MMBal >  7269.33\n|   |   |--- CDBal <= 2350.00\n|   |   |   |--- Checks <= 4.50\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- Checks >  4.50\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |--- CDBal >  2350.00\n|   |   |   |--- MMBal <= 15096.31\n|   |   |   |   |--- class: 1\n|   |   |   |--- MMBal >  15096.31\n|   |   |   |   |--- class: 1\n|--- SavBal >  1616.90\n|   |--- SavBal <= 8196.15\n|   |   |--- Checks <= 6.50\n|   |   |   |--- CDBal <= 150.00\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- CDBal >  150.00\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |--- Checks >  6.50\n|   |   |   |--- SavBal <= 4091.64\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- SavBal >  4091.64\n|   |   |   |   |--- class: 1\n|   |--- SavBal >  8196.15\n|   |   |--- SavBal <= 14470.88\n|   |   |   |--- DepAmt <= 1520.58\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- DepAmt >  1520.58\n|   |   |   |   |--- class: 1\n|   |   |--- SavBal >  14470.88\n|   |   |   |--- ATMAmt <= 495.25\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- ATMAmt >  495.25\n|   |   |   |   |--- class: 1\n", "positive_rate": 0.346285506190823};
+
+/* -------- helpers -------- */
+const fmtPct = x => (x*100).toFixed(1) + "%";
+const fmtNum = (x, d=3) => Number(x).toFixed(d);
+const fmtInt = x => x.toLocaleString('es-CO');
+
+/* -------- tabs -------- */
+document.querySelectorAll('#tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+  });
+});
+
+/* -------- header values -------- */
+const m = DATA.metrics;
+document.getElementById('m-depth').textContent = m.tree_depth;
+document.getElementById('m-leaves').textContent = m.n_leaves;
+
+document.getElementById('k-auc').textContent = fmtNum(m.auc_test, 3);
+document.getElementById('k-cv').textContent = fmtNum(DATA.cv_mean, 3);
+document.getElementById('k-cv-note').textContent = '± ' + fmtNum(DATA.cv_std, 3);
+document.getElementById('k-rec').textContent = fmtPct(m.recall_test);
+document.getElementById('k-prec').textContent = fmtPct(m.precision_test);
+document.getElementById('k-f1').textContent = fmtNum(m.f1_test, 3);
+document.getElementById('k-acc').textContent = fmtPct(m.accuracy_test);
+document.getElementById('k-base').textContent = fmtPct(DATA.positive_rate);
+
+const lift1 = DATA.deciles[0].lift;
+document.getElementById('k-lift').textContent = fmtNum(lift1, 2) + 'x';
+
+document.getElementById('t-auc').textContent = fmtNum(m.auc_test, 3);
+document.getElementById('t-cv').textContent = 'AUC = ' + fmtNum(DATA.cv_mean, 3) + ' ± ' + fmtNum(DATA.cv_std, 3);
+document.getElementById('t-leaves').textContent = m.n_leaves;
+document.getElementById('t-depth').textContent = m.tree_depth;
+
+/* matrix */
+const cm = DATA.cm;
+document.getElementById('cm00').textContent = fmtInt(cm[0][0]);
+document.getElementById('cm01').textContent = fmtInt(cm[0][1]);
+document.getElementById('cm10').textContent = fmtInt(cm[1][0]);
+document.getElementById('cm11').textContent = fmtInt(cm[1][1]);
+
+document.getElementById('roc-auc').textContent = fmtNum(m.auc_test, 3);
+document.getElementById('auc-tr').textContent = fmtNum(m.auc_train, 3);
+document.getElementById('auc-te').textContent = fmtNum(m.auc_test, 3);
+document.getElementById('auc-d').textContent = fmtNum(m.auc_train - m.auc_test, 3);
+document.getElementById('acc-tr').textContent = fmtPct(m.accuracy_train);
+document.getElementById('acc-te').textContent = fmtPct(m.accuracy_test);
+document.getElementById('acc-d').textContent = fmtPct(m.accuracy_train - m.accuracy_test);
+
+document.getElementById('lift-mult').textContent = fmtNum(lift1, 2);
+const cum3 = DATA.deciles[2].cum_capt_pct;
+document.getElementById('gain-30').textContent = fmtPct(cum3);
+document.getElementById('conc-30').textContent = fmtPct(cum3);
+
+document.getElementById('rulesText').textContent = DATA.tree_text;
+document.getElementById('gen-date').textContent = new Date().toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
+
+/* -------- ROC chart -------- */
+function drawROC() {
+  const c = document.getElementById('rocChart');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  const pad = {l:55, r:20, t:20, b:50};
+  ctx.clearRect(0,0,W,H);
+
+  // axes
+  ctx.strokeStyle = '#1a1614'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, H-pad.b);
+  ctx.stroke();
+
+  // grid
+  ctx.strokeStyle = '#e0dcd3'; ctx.lineWidth = 1;
+  for (let i=1; i<=4; i++) {
+    const y = pad.t + (H-pad.t-pad.b)*i/5;
+    const x = pad.l + (W-pad.l-pad.r)*i/5;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, H-pad.b); ctx.stroke();
+  }
+
+  // diagonal
+  ctx.strokeStyle = '#999'; ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, pad.t);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // ROC curve
+  const fpr = DATA.roc.fpr, tpr = DATA.roc.tpr;
+  ctx.strokeStyle = '#c24a1f'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i=0; i<fpr.length; i++) {
+    const x = pad.l + fpr[i]*(W-pad.l-pad.r);
+    const y = H-pad.b - tpr[i]*(H-pad.t-pad.b);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // fill
+  ctx.fillStyle = 'rgba(194,74,31,0.12)';
+  ctx.lineTo(W-pad.r, H-pad.b); ctx.lineTo(pad.l, H-pad.b); ctx.closePath(); ctx.fill();
+
+  // labels
+  ctx.fillStyle = '#14110f';
+  ctx.font = '12px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  for (let i=0; i<=5; i++) {
+    const x = pad.l + (W-pad.l-pad.r)*i/5;
+    ctx.fillText((i/5).toFixed(1), x, H-pad.b+18);
+    const y = H-pad.b - (H-pad.t-pad.b)*i/5;
+    ctx.textAlign = 'right';
+    ctx.fillText((i/5).toFixed(1), pad.l-6, y+4);
+    ctx.textAlign = 'center';
+  }
+  ctx.font = 'italic 13px Georgia';
+  ctx.fillText('False Positive Rate', pad.l + (W-pad.l-pad.r)/2, H-12);
+  ctx.save();
+  ctx.translate(16, pad.t + (H-pad.t-pad.b)/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('True Positive Rate', 0, 0);
+  ctx.restore();
+}
+
+/* -------- CM heatmap -------- */
+function drawCM() {
+  const c = document.getElementById('cmChart');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  const pad = {l:80, r:20, t:50, b:60};
+  const cellW = (W-pad.l-pad.r)/2;
+  const cellH = (H-pad.t-pad.b)/2;
+  const data = DATA.cm;
+  const total = data[0][0]+data[0][1]+data[1][0]+data[1][1];
+
+  const colors = [
+    ['#b7e4c7', '#f4c2c2'],  // TN (good), FP (bad)
+    ['#f4c2c2', '#b7e4c7']   // FN (bad), TP (good)
+  ];
+
+  for (let i=0; i<2; i++) {
+    for (let j=0; j<2; j++) {
+      const x = pad.l + j*cellW;
+      const y = pad.t + i*cellH;
+      ctx.fillStyle = colors[i][j];
+      ctx.fillRect(x, y, cellW, cellH);
+      ctx.strokeStyle = '#1a1614'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, cellW, cellH);
+      ctx.fillStyle = '#14110f';
+      ctx.font = 'bold 32px "Didot", Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText(fmtInt(data[i][j]), x+cellW/2, y+cellH/2);
+      ctx.font = '12px "Courier New", monospace';
+      ctx.fillStyle = '#5a544e';
+      ctx.fillText(((data[i][j]/total)*100).toFixed(1)+'%', x+cellW/2, y+cellH/2+22);
+    }
+  }
+  // headers
+  ctx.fillStyle = '#14110f';
+  ctx.font = 'bold 13px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PRED. 0', pad.l + cellW/2, pad.t-14);
+  ctx.fillText('PRED. 1', pad.l + cellW + cellW/2, pad.t-14);
+  ctx.save();
+  ctx.translate(pad.l-22, pad.t+cellH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('REAL 0', 0, 0);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(pad.l-22, pad.t+cellH+cellH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('REAL 1', 0, 0);
+  ctx.restore();
+}
+
+/* -------- Importance bar chart -------- */
+function drawImportance() {
+  const c = document.getElementById('impChart');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  const pad = {l:120, r:80, t:20, b:40};
+  const imps = DATA.importances.filter(x => x.importance > 0);
+  const max = Math.max(...imps.map(x => x.importance));
+  const barH = (H-pad.t-pad.b)/imps.length * 0.7;
+  const gap = (H-pad.t-pad.b)/imps.length * 0.3;
+
+  imps.forEach((it, i) => {
+    const y = pad.t + i*((H-pad.t-pad.b)/imps.length) + gap/2;
+    const w = (it.importance/max)*(W-pad.l-pad.r);
+    // bar
+    ctx.fillStyle = i < 4 ? '#c24a1f' : '#5a544e';
+    ctx.fillRect(pad.l, y, w, barH);
+    // label var
+    ctx.fillStyle = '#14110f';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(it.variable, pad.l-10, y+barH/2+5);
+    // value
+    ctx.font = '12px "Courier New", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#5a544e';
+    ctx.fillText((it.importance*100).toFixed(2)+'%', pad.l+w+6, y+barH/2+5);
+  });
+}
+
+/* -------- Group stats table -------- */
+function fillGroupTable() {
+  const tb = document.querySelector('#grpTable tbody');
+  DATA.group_stats.forEach(g => {
+    const delta = g.mean_ins && g.mean_no_ins
+      ? ((g.mean_ins - g.mean_no_ins)/Math.abs(g.mean_no_ins || 1)*100).toFixed(1)+'%'
+      : '—';
+    const fmt = v => v === null || v === undefined ? '—' :
+      (Math.abs(v) >= 1000 ? v.toLocaleString('es-CO', {maximumFractionDigits:0}) :
+       v.toLocaleString('es-CO', {maximumFractionDigits:2}));
+    tb.insertAdjacentHTML('beforeend',
+      `<tr><td><b>${g.variable}</b></td><td class="num">${fmt(g.mean_no_ins)}</td><td class="num">${fmt(g.mean_ins)}</td><td class="num">${delta}</td></tr>`);
+  });
+}
+
+/* -------- Deciles table & charts -------- */
+function fillDeciles() {
+  const tb = document.querySelector('#decilesTable tbody');
+  DATA.deciles.forEach(d => {
+    tb.insertAdjacentHTML('beforeend',
+      `<tr>
+         <td><b>${d.decile}</b></td>
+         <td class="num">${fmtInt(d.n)}</td>
+         <td class="num">${fmtInt(d.capt)}</td>
+         <td class="num">${fmtPct(d.rate)}</td>
+         <td class="num"><b>${fmtNum(d.lift,2)}x</b></td>
+         <td class="num">${fmtPct(d.capt_pct)}</td>
+         <td class="num">${fmtPct(d.cum_capt_pct)}</td>
+       </tr>`);
+  });
+}
+
+function drawLift() {
+  const c = document.getElementById('liftChart');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  const pad = {l:50, r:20, t:20, b:55};
+  const d = DATA.deciles;
+  const maxL = Math.max(...d.map(x => x.lift), 1);
+  const bw = (W-pad.l-pad.r)/d.length * 0.78;
+  const gap = (W-pad.l-pad.r)/d.length * 0.22;
+
+  // axes
+  ctx.strokeStyle = '#1a1614'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, H-pad.b);
+  ctx.stroke();
+
+  // baseline lift=1
+  const y1 = H-pad.b - (1/maxL)*(H-pad.t-pad.b);
+  ctx.strokeStyle = '#a4161a'; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, y1); ctx.lineTo(W-pad.r, y1); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#a4161a'; ctx.font = 'italic 11px Georgia'; ctx.textAlign = 'left';
+  ctx.fillText('lift = 1 (tasa base)', pad.l+6, y1-4);
+
+  // bars
+  d.forEach((it, i) => {
+    const x = pad.l + i*((W-pad.l-pad.r)/d.length) + gap/2;
+    const h = (it.lift/maxL)*(H-pad.t-pad.b);
+    ctx.fillStyle = it.lift >= 1.5 ? '#2d6a4f' : it.lift >= 1 ? '#d4a017' : '#a4161a';
+    ctx.fillRect(x, H-pad.b-h, bw, h);
+    ctx.strokeStyle = '#1a1614'; ctx.strokeRect(x, H-pad.b-h, bw, h);
+    // label
+    ctx.fillStyle = '#14110f';
+    ctx.font = 'bold 11px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('D'+it.decile, x+bw/2, H-pad.b+15);
+    ctx.font = '10px "Courier New", monospace';
+    ctx.fillText(fmtNum(it.lift,2)+'x', x+bw/2, H-pad.b-h-4);
+  });
+  // y axis ticks
+  ctx.fillStyle = '#5a544e';
+  ctx.font = '11px "Courier New", monospace';
+  ctx.textAlign = 'right';
+  for (let i=0; i<=4; i++) {
+    const y = pad.t + (H-pad.t-pad.b)*(1-i/4);
+    const v = (maxL*i/4).toFixed(1);
+    ctx.fillText(v, pad.l-6, y+4);
+    ctx.strokeStyle = '#e0dcd3';
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  }
+  ctx.font = 'italic 12px Georgia'; ctx.fillStyle = '#14110f';
+  ctx.textAlign = 'center';
+  ctx.fillText('Decil de probabilidad estimada', pad.l + (W-pad.l-pad.r)/2, H-8);
+}
+
+function drawGain() {
+  const c = document.getElementById('gainChart');
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  const pad = {l:55, r:20, t:20, b:50};
+  const d = DATA.deciles;
+
+  // axes
+  ctx.strokeStyle = '#1a1614'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, H-pad.b);
+  ctx.stroke();
+
+  // grid
+  ctx.strokeStyle = '#e0dcd3'; ctx.lineWidth = 1;
+  for (let i=1; i<=4; i++) {
+    const y = pad.t + (H-pad.t-pad.b)*i/5;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  }
+
+  // baseline (random)
+  ctx.strokeStyle = '#999'; ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, pad.t);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // gain curve
+  ctx.strokeStyle = '#2d6a4f'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, H-pad.b);
+  d.forEach((it, i) => {
+    const x = pad.l + ((i+1)/d.length)*(W-pad.l-pad.r);
+    const y = H-pad.b - it.cum_capt_pct*(H-pad.t-pad.b);
+    ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // fill
+  ctx.fillStyle = 'rgba(45,106,79,0.12)';
+  ctx.lineTo(W-pad.r, H-pad.b); ctx.lineTo(pad.l, H-pad.b); ctx.closePath(); ctx.fill();
+
+  // dots
+  ctx.fillStyle = '#2d6a4f';
+  d.forEach((it, i) => {
+    const x = pad.l + ((i+1)/d.length)*(W-pad.l-pad.r);
+    const y = H-pad.b - it.cum_capt_pct*(H-pad.t-pad.b);
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+  });
+
+  // labels
+  ctx.fillStyle = '#5a544e';
+  ctx.font = '11px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  for (let i=0; i<=5; i++) {
+    const x = pad.l + (W-pad.l-pad.r)*i/5;
+    ctx.fillText((i*20)+'%', x, H-pad.b+18);
+  }
+  ctx.textAlign = 'right';
+  for (let i=0; i<=5; i++) {
+    const y = H-pad.b - (H-pad.t-pad.b)*i/5;
+    ctx.fillText((i*20)+'%', pad.l-6, y+4);
+  }
+  ctx.font = 'italic 12px Georgia'; ctx.fillStyle = '#14110f';
+  ctx.textAlign = 'center';
+  ctx.fillText('% Población contactada', pad.l + (W-pad.l-pad.r)/2, H-10);
+  ctx.save();
+  ctx.translate(16, pad.t + (H-pad.t-pad.b)/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('% Capturado', 0, 0);
+  ctx.restore();
+}
+
+/* -------- Tree SVG -------- */
+function colorFromProb(p) {
+  if (p < 0.30) return '#f4c2c2';
+  if (p < 0.60) return '#f4e1a4';
+  return '#b7e4c7';
+}
+
+function renderTree() {
+  // compute layout
+  const root = DATA.tree;
+  // gather nodes & positions using a tidy tree algorithm (simple variant)
+  let nextX = 0;
+  function layout(node, depth=0) {
+    node.depth = depth;
+    if (node.type === 'leaf') {
+      node.x = nextX++;
+    } else {
+      layout(node.left, depth+1);
+      layout(node.right, depth+1);
+      node.x = (node.left.x + node.right.x)/2;
+    }
+  }
+  layout(root, 0);
+
+  // collect
+  const nodes = [];
+  const edges = [];
+  function walk(n, parent=null, side=null) {
+    nodes.push(n);
+    if (parent) edges.push({from:parent, to:n, side});
+    if (n.type === 'node') {
+      walk(n.left, n, 'L');
+      walk(n.right, n, 'R');
+    }
+  }
+  walk(root);
+
+  const maxX = nextX-1;
+  const maxDepth = Math.max(...nodes.map(n => n.depth));
+  const W = Math.max(1100, (maxX+1)*135);
+  const H = (maxDepth+1)*135 + 60;
+  const xScale = x => 40 + (x/(maxX||1))*(W-80);
+  const yScale = d => 30 + d*135;
+  const nodeW = 124, nodeH = 78;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Courier New', monospace;">`;
+
+  // edges
+  edges.forEach(e => {
+    const x1 = xScale(e.from.x), y1 = yScale(e.from.depth)+nodeH/2;
+    const x2 = xScale(e.to.x), y2 = yScale(e.to.depth)-nodeH/2;
+    const mx = (x1+x2)/2;
+    svg += `<path d="M ${x1} ${y1} C ${x1} ${(y1+y2)/2}, ${x2} ${(y1+y2)/2}, ${x2} ${y2}" stroke="#1a1614" stroke-width="1.5" fill="none"/>`;
+    // label SI/NO
+    svg += `<rect x="${mx-14}" y="${(y1+y2)/2-9}" width="28" height="18" fill="#f6f5f0" stroke="#1a1614" stroke-width="1"/>`;
+    svg += `<text x="${mx}" y="${(y1+y2)/2+4}" text-anchor="middle" font-size="10" font-weight="bold">${e.side==='L'?'SI':'NO'}</text>`;
+  });
+
+  // nodes
+  nodes.forEach(n => {
+    const cx = xScale(n.x), cy = yScale(n.depth);
+    const x = cx-nodeW/2, y = cy-nodeH/2;
+    const fill = colorFromProb(n.prob_pos);
+    svg += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" fill="${fill}" stroke="#1a1614" stroke-width="1.5" rx="3"/>`;
+    if (n.type === 'node') {
+      // feature
+      svg += `<text x="${cx}" y="${y+18}" text-anchor="middle" font-size="12" font-weight="bold" fill="#14110f">${n.feature}</text>`;
+      // threshold
+      const thr = Math.abs(n.threshold) >= 100 ? n.threshold.toFixed(0) : n.threshold.toFixed(2);
+      svg += `<text x="${cx}" y="${y+33}" text-anchor="middle" font-size="11" fill="#14110f">&#8804; ${thr}</text>`;
+    } else {
+      svg += `<text x="${cx}" y="${y+18}" text-anchor="middle" font-size="11" font-weight="bold" fill="#14110f">HOJA</text>`;
+      svg += `<text x="${cx}" y="${y+33}" text-anchor="middle" font-size="11" fill="#14110f">clase ${n.class}</text>`;
+    }
+    // samples
+    svg += `<text x="${cx}" y="${y+50}" text-anchor="middle" font-size="10" fill="#5a544e">n = ${n.samples.toLocaleString('es-CO')}</text>`;
+    // prob
+    svg += `<text x="${cx}" y="${y+66}" text-anchor="middle" font-size="11" font-weight="bold" fill="#14110f">P(INS)=${(n.prob_pos*100).toFixed(1)}%</text>`;
+  });
+
+  svg += `</svg>`;
+  document.getElementById('treeSvg').innerHTML = svg;
+}
+
+/* -------- run all -------- */
+drawROC();
+drawCM();
+drawImportance();
+fillGroupTable();
+fillDeciles();
+drawLift();
+drawGain();
+renderTree();
+</script>
+</body>
+</html>
